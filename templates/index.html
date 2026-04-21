@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Spending Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <nav>
+    <span class="logo">🥗 Food Tracker</span>
+    <a href="/landing">About</a>
+    <a href="/" class="active">Home</a>
+    <a href="/history">History</a>
+    <a href="/stats">Stats</a>
+    <span class="nav-user">{{ current_username }}</span>
+    <a href="/logout" class="nav-logout">Log out</a>
+  </nav>
+
+  <div class="page">
+
+    <div class="summary-card">
+      <div>
+        <div class="label">Today's Spending</div>
+        <div class="value">${{ today_total }}</div>
+      </div>
+      <div class="date-block">
+        <div class="label">Today</div>
+        <div class="value">{{ today }}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Add an Entry</h2>
+      <form action="/add" method="POST">
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" value="{{ today }}" required>
+          </div>
+
+          <div class="form-group">
+            <label for="source">Source</label>
+            <select id="source" name="source" required onchange="handleSource(this.value)">
+              <option value="">— Select —</option>
+              <option value="Eating Out">Eating Out</option>
+              <option value="From Groceries">From Groceries</option>
+              <option value="Grocery Shopping">Grocery Shopping</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="meal-group">
+            <label for="meal">Meal Type</label>
+            <select id="meal" name="meal">
+              <option value="">— Select (optional) —</option>
+              <option value="Breakfast">Breakfast</option>
+              <option value="Lunch">Lunch</option>
+              <option value="Dinner">Dinner</option>
+              <option value="Snack">Snack</option>
+              <option value="Drink">Drink</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="amount-group">
+            <label for="amount">Amount ($)</label>
+            <input type="number" step="0.01" min="0" id="amount" name="amount" placeholder="0.00">
+          </div>
+
+          <div class="form-group full-width">
+            <label for="item">Item / Description</label>
+            <input type="text" id="item" name="item"
+              placeholder="e.g. Chipotle burrito, Pasta with tomato sauce, Weekly Trader Joe's run" required>
+          </div>
+
+          <div id="reference-group" class="form-group reference-row">
+            <label for="reference">Which grocery trip is this from? (optional)</label>
+            <select id="reference" name="reference">
+              <option value="">— None —</option>
+              {% for g in grocery_runs %}
+              <option value="{{ g.date }}: {{ g.item }} (${{ '%.2f'|format(g.amount) }})">
+                {{ g.date }} — {{ g.item }} (${{ '%.2f'|format(g.amount) }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button type="submit" class="submit-btn">Add Entry</button>
+
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Recent Entries (Last 10)</h2>
+      {% if expenses %}
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Meal</th>
+            <th>Source</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expenses %}
+          <tr>
+            <td>{{ e.date }}</td>
+            <td>
+              {{ e.item }}
+              {% if e.reference %}
+              <span class="ref-note">↩ {{ e.reference }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if e.meal %}
+              <span class="badge meal-{{ e.meal }}">{{ e.meal }}</span>
+              {% else %}
+              <span style="color:#ccc;">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge source-{{ e.source | replace(' ', '-') }}">{{ e.source }}</span>
+            </td>
+            <td class="amount-cell">
+              {% if e.source == "From Groceries" %}
+              <span class="free-label">from groceries</span>
+              {% else %}
+              ${{ "%.2f"|format(e.amount) }}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">No entries yet — add your first one above!</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <script>
+    function handleSource(val) {
+      const mealGroup   = document.getElementById('meal-group');
+      const amountGroup = document.getElementById('amount-group');
+      const amountInput = document.getElementById('amount');
+      const refGroup    = document.getElementById('reference-group');
+      const refSelect   = document.getElementById('reference');
+      const mealSelect  = document.getElementById('meal');
+
+      // Reset
+      mealGroup.style.opacity = '1';
+      mealGroup.style.pointerEvents = '';
+      amountGroup.style.opacity = '1';
+      amountGroup.style.pointerEvents = '';
+      amountInput.required = true;
+      refGroup.classList.remove('visible');
+      refSelect.value = '';
+
+      if (val === 'From Groceries') {
+        // No extra cost — hide amount, show reference, keep meal
+        amountGroup.style.opacity = '0.4';
+        amountGroup.style.pointerEvents = 'none';
+        amountInput.value = '0';
+        amountInput.required = false;
+        refGroup.classList.add('visible');
+      } else if (val === 'Grocery Shopping') {
+        // No meal type applies
+        mealGroup.style.opacity = '0.4';
+        mealGroup.style.pointerEvents = 'none';
+        mealSelect.value = '';
+      }
+    }
+  </script>
+
+</body>
+</html>

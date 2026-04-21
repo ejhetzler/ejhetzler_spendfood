@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stats — Food Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <nav>
+    <span class="logo">🥗 Food Tracker</span>
+    <a href="/landing">About</a>
+    <a href="/">Home</a>
+    <a href="/history">History</a>
+    <a href="/stats" class="active">Stats</a>
+    <span class="nav-user">{{ current_username }}</span>
+    <a href="/logout" class="nav-logout">Log out</a>
+  </nav>
+
+  <div class="page">
+
+    <div class="page-title">Your Stats</div>
+
+    <div class="stat-tiles">
+      <div class="stat-tile">
+        <div class="stat-label">All-Time Spent</div>
+        <div class="stat-value">${{ total_spent }}</div>
+      </div>
+      <div class="stat-tile highlight">
+        <div class="stat-label">This Month</div>
+        <div class="stat-value">${{ this_month }}</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">Total Entries</div>
+        <div class="stat-value">{{ total_entries }}</div>
+      </div>
+      <div class="stat-tile">
+        <div class="stat-label">Biggest Purchase</div>
+        {% if biggest %}
+        <div class="stat-value">${{ "%.2f"|format(biggest.amount) }}</div>
+        <div class="stat-sub">{{ biggest.item }}</div>
+        {% else %}
+        <div class="stat-value">—</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Monthly Spending Trend</h2>
+      {% if monthly_labels %}
+      <div class="chart-wrap">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+      {% else %}
+      <div class="empty-state">Not enough data yet — add some entries first.</div>
+      {% endif %}
+    </div>
+
+    <div class="two-col">
+
+      <div class="card">
+        <h2>Spending by Meal</h2>
+        {% if meal_totals %}
+        <div class="chart-wrap chart-wrap-sm">
+          <canvas id="mealChart"></canvas>
+        </div>
+        {% else %}
+        <div class="empty-state">No meal data yet.</div>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h2>Eating Out vs. Groceries</h2>
+        {% if source_totals %}
+        <div class="chart-wrap chart-wrap-sm">
+          <canvas id="sourceChart"></canvas>
+        </div>
+        {% else %}
+        <div class="empty-state">No source data yet.</div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <div class="card">
+      <h2>Most Frequent Items</h2>
+      {% if top_items %}
+      <ul class="top-list">
+        {% for item, count in top_items %}
+        <li class="top-item">
+          <span class="top-name">{{ item }}</span>
+          <span class="top-count">{{ count }}×</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty-state">No data yet.</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <script>
+    const green  = '#3a7d44';
+    const greens = ['#3a7d44','#52a85f','#74c47d','#a4d9ab','#d0edcf','#b2dfdb'];
+    const srcColors = { 'Eating Out': '#2d89ef', 'Grocery Shopping': '#3a7d44', 'From Groceries': '#f39c12' };
+
+    {% if monthly_labels %}
+    new Chart(document.getElementById('monthlyChart'), {
+      type: 'bar',
+      data: {
+        labels: {{ monthly_labels | tojson }},
+        datasets: [{ label: 'Spending ($)', data: {{ monthly_values | tojson }},
+          backgroundColor: green, borderRadius: 6 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v } } }
+      }
+    });
+    {% endif %}
+
+    {% if meal_totals %}
+    new Chart(document.getElementById('mealChart'), {
+      type: 'doughnut',
+      data: {
+        labels: {{ meal_totals.keys() | list | tojson }},
+        datasets: [{ data: {{ meal_totals.values() | list | tojson }},
+          backgroundColor: greens, borderWidth: 2, borderColor: '#fff' }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ' $' + ctx.parsed.toFixed(2) } }
+        }
+      }
+    });
+    {% endif %}
+
+    {% if source_totals %}
+    new Chart(document.getElementById('sourceChart'), {
+      type: 'doughnut',
+      data: {
+        labels: {{ source_totals.keys() | list | tojson }},
+        datasets: [{
+          data: {{ source_totals.values() | list | tojson }},
+          backgroundColor: {{ source_totals.keys() | list | tojson }}.map(k => srcColors[k] || '#aaa'),
+          borderWidth: 2, borderColor: '#fff'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { padding: 12, font: { size: 11 } } },
+          tooltip: { callbacks: { label: ctx => ' $' + ctx.parsed.toFixed(2) } }
+        }
+      }
+    });
+    {% endif %}
+  </script>
+
+</body>
+</html>

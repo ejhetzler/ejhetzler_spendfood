@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food Spending Tracker — Know What You Spend</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    /* ── LANDING-ONLY STYLES ── */
+
+    body { background: #fff; }
+
+    /* Top bar */
+    .lp-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(30, 80, 38, 0.97);
+      backdrop-filter: blur(8px);
+      padding: 14px 40px;
+      display: flex; align-items: center; gap: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+    }
+    .lp-nav .logo { font-size: 1.25rem; font-weight: 800; color: #fff; margin-right: auto; }
+    .lp-nav a.lp-link {
+      color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem;
+      font-weight: 500; padding: 5px 0; transition: color 0.2s;
+    }
+    .lp-nav a.lp-link:hover { color: #fff; }
+    .lp-nav a.lp-cta {
+      background: #fff; color: #2d6a35; font-weight: 700; font-size: 0.88rem;
+      padding: 8px 20px; border-radius: 24px; text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .lp-nav a.lp-cta:hover { background: #e8f5e9; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #1e5026 0%, #2d7a3a 45%, #3a9e4a 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 120px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    .hero-tag {
+      display: inline-block; background: rgba(255,255,255,0.15);
+      color: #d4f7d8; font-size: 0.8rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 5px 16px; border-radius: 20px; margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 5vw, 3.8rem);
+      font-weight: 900; color: #fff; line-height: 1.12;
+      max-width: 700px; margin: 0 auto 20px; letter-spacing: -0.02em;
+    }
+    .hero h1 span { color: #a8f0b4; }
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.2rem); color: rgba(255,255,255,0.8);
+      max-width: 520px; margin: 0 auto 40px; line-height: 1.6;
+    }
+    .hero-btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: #fff; color: #2d6a35; font-weight: 800; font-size: 1rem;
+      padding: 14px 34px; border-radius: 50px; text-decoration: none;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.25); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; font-size: 1rem;
+      padding: 14px 34px; border-radius: 50px; text-decoration: none;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      transition: background 0.2s, transform 0.2s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+
+    .hero-scroll {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      color: rgba(255,255,255,0.4); font-size: 0.75rem; letter-spacing: 0.08em;
+      text-transform: uppercase; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    }
+    .hero-scroll::after {
+      content: '';
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+    }
+
+    /* ── STATS STRIP ── */
+    .stats-strip {
+      background: #f8fdf8; border-top: 1px solid #e0ede0; border-bottom: 1px solid #e0ede0;
+      padding: 36px 40px;
+      display: flex; justify-content: center; gap: 0; flex-wrap: wrap;
+    }
+    .strip-item {
+      flex: 1; min-width: 160px; text-align: center;
+      padding: 12px 24px; border-right: 1px solid #d8ead8;
+    }
+    .strip-item:last-child { border-right: none; }
+    .strip-num { font-size: 2rem; font-weight: 900; color: #2d6a35; line-height: 1; }
+    .strip-desc { font-size: 0.82rem; color: #7a9a7a; margin-top: 4px; font-weight: 500; }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 96px 40px; background: #fff; max-width: 1080px; margin: 0 auto;
+    }
+    .section-label {
+      text-align: center; font-size: 0.75rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: #3a7d44; margin-bottom: 12px;
+    }
+    .section-title {
+      text-align: center; font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 900; color: #1a3a1e; margin-bottom: 56px; line-height: 1.2;
+    }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+    }
+    .feature-card {
+      background: #f8fdf8; border-radius: 18px; padding: 32px 28px;
+      border: 1.5px solid #e4f0e4;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(58,125,68,0.1); }
+    .feature-icon {
+      font-size: 2rem; margin-bottom: 18px;
+      width: 58px; height: 58px; display: flex; align-items: center; justify-content: center;
+      background: #e8f5e9; border-radius: 14px;
+    }
+    .feature-card h3 { font-size: 1.05rem; font-weight: 800; color: #1a3a1e; margin-bottom: 10px; }
+    .feature-card p  { font-size: 0.9rem; color: #5a7a5a; line-height: 1.6; }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      background: linear-gradient(180deg, #f2f8f2 0%, #e8f5e9 100%);
+      padding: 96px 40px;
+    }
+    .how-inner { max-width: 900px; margin: 0 auto; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; position: relative; }
+    .steps::before {
+      content: '';
+      position: absolute; top: 28px; left: 16%; right: 16%; height: 2px;
+      background: linear-gradient(to right, #3a7d44, #74c47d, #3a7d44);
+      z-index: 0;
+    }
+    .step { text-align: center; padding: 0 20px; position: relative; z-index: 1; }
+    .step-num {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #3a7d44; color: #fff;
+      font-size: 1.2rem; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; box-shadow: 0 4px 16px rgba(58,125,68,0.3);
+    }
+    .step h3 { font-size: 1rem; font-weight: 800; color: #1a3a1e; margin-bottom: 8px; }
+    .step p  { font-size: 0.87rem; color: #5a7a5a; line-height: 1.6; }
+
+    /* ── CTA BANNER ── */
+    .cta-banner {
+      background: linear-gradient(135deg, #2d7a3a 0%, #1e5026 100%);
+      padding: 96px 40px; text-align: center;
+    }
+    .cta-banner h2 {
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 900;
+      color: #fff; margin-bottom: 16px; line-height: 1.2;
+    }
+    .cta-banner p { font-size: 1.05rem; color: rgba(255,255,255,0.75); margin-bottom: 36px; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #111d12; color: rgba(255,255,255,0.45);
+      padding: 28px 40px; text-align: center; font-size: 0.82rem;
+    }
+    footer a { color: rgba(255,255,255,0.55); text-decoration: none; margin: 0 10px; }
+    footer a:hover { color: #fff; }
+
+    @media (max-width: 700px) {
+      .features-grid, .steps { grid-template-columns: 1fr; }
+      .steps::before { display: none; }
+      .stats-strip { flex-direction: column; gap: 4px; }
+      .strip-item { border-right: none; border-bottom: 1px solid #d8ead8; }
+      .strip-item:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="lp-nav">
+    <span class="logo">🥗 Food Tracker</span>
+    <a href="/landing" class="lp-link">Home</a>
+    <a href="/#features" class="lp-link">Features</a>
+    <a href="/#how" class="lp-link">How It Works</a>
+    <a href="/login" class="lp-cta">Log In →</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tag">Personal Finance · Food Edition</div>
+    <h1>Know exactly where your <span>food money</span> goes.</h1>
+    <p>Track every meal, every grocery run, and every bite at home — all in one place. Understand your habits, find where you overspend, and eat smarter.</p>
+    <div class="hero-btns">
+      <a href="/register" class="btn-primary">Create Free Account</a>
+      <a href="/login" class="btn-ghost">Log In</a>
+    </div>
+    <div class="hero-scroll">Scroll</div>
+  </section>
+
+  <!-- STATS STRIP -->
+  <div class="stats-strip">
+    <div class="strip-item">
+      <div class="strip-num">3</div>
+      <div class="strip-desc">Pages of insight</div>
+    </div>
+    <div class="strip-item">
+      <div class="strip-num">7</div>
+      <div class="strip-desc">Meal categories</div>
+    </div>
+    <div class="strip-item">
+      <div class="strip-num">∞</div>
+      <div class="strip-desc">Entries stored</div>
+    </div>
+    <div class="strip-item">
+      <div class="strip-num">$0</div>
+      <div class="strip-desc">Cost to use</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="section-label">What you get</div>
+    <div class="section-title">Everything you need to track food spending</div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🍽️</div>
+        <h3>Log Any Meal</h3>
+        <p>Track eating out, home-cooked meals, snacks, drinks, and grocery runs — each with its own meal type and source so nothing gets mixed up.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛒</div>
+        <h3>Grocery Linking</h3>
+        <p>Log a grocery shopping trip, then link individual meals back to it. See exactly how far your groceries stretch throughout the week.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Visual Stats</h3>
+        <p>Monthly spending trends, meal-type breakdowns, and eating-out vs. groceries charts — so you can spot patterns at a glance.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🕓</div>
+        <h3>Full History</h3>
+        <p>Every entry, searchable and filterable by meal type or source. Find any item in seconds, no matter how far back it was logged.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Daily Totals</h3>
+        <p>See today's spending the moment you open the app. Only real money is counted — eating from groceries never inflates your daily total.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <h3>CSV Storage</h3>
+        <p>Your data lives in a simple CSV file — easy to open in Excel, back up to GitHub, or take anywhere. You always own your data.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how" id="how">
+    <div class="how-inner">
+      <div class="section-label">Simple by design</div>
+      <div class="section-title">Up and running in seconds</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Choose your source</h3>
+          <p>Pick Eating Out, From Groceries, or Grocery Shopping — the form adapts instantly to what you need.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Log the details</h3>
+          <p>Add the meal type, item name, amount, and optionally link it to a past grocery run.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Watch it add up</h3>
+          <p>Your history, daily total, and stats update immediately — no refreshing needed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-banner">
+    <h2>Ready to take control of your food spending?</h2>
+    <p>It takes less than 10 seconds to log your first entry.</p>
+    <a href="/register" class="btn-primary">Get Started Free →</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <span>🥗 Food Spending Tracker</span>
+    <a href="/">App</a>
+    <a href="/history">History</a>
+    <a href="/stats">Stats</a>
+  </footer>
+
+</body>
+</html>

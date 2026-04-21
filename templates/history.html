@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entry History — Food Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+  <nav>
+    <span class="logo">🥗 Food Tracker</span>
+    <a href="/landing">About</a>
+    <a href="/">Home</a>
+    <a href="/history" class="active">History</a>
+    <a href="/stats">Stats</a>
+    <span class="nav-user">{{ current_username }}</span>
+    <a href="/logout" class="nav-logout">Log out</a>
+  </nav>
+
+  <div class="page">
+
+    <div class="page-title">All Entries</div>
+
+    <div class="card">
+      <div class="filter-bar">
+        <input type="text" id="search" placeholder="Search items..." oninput="filterTable()">
+        <select id="meal-filter" onchange="filterTable()">
+          <option value="">All Meals</option>
+          <option value="Breakfast">Breakfast</option>
+          <option value="Lunch">Lunch</option>
+          <option value="Dinner">Dinner</option>
+          <option value="Snack">Snack</option>
+          <option value="Drink">Drink</option>
+        </select>
+        <select id="source-filter" onchange="filterTable()">
+          <option value="">All Sources</option>
+          <option value="Eating Out">Eating Out</option>
+          <option value="From Groceries">From Groceries</option>
+          <option value="Grocery Shopping">Grocery Shopping</option>
+        </select>
+      </div>
+
+      {% if expenses %}
+      <table id="history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Meal</th>
+            <th>Source</th>
+            <th>Amount</th>
+            <th>Grocery Ref</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expenses %}
+          <tr data-meal="{{ e.meal }}" data-source="{{ e.source }}" data-item="{{ e.item|lower }}">
+            <td>{{ e.date }}</td>
+            <td>{{ e.item }}</td>
+            <td>
+              {% if e.meal %}
+              <span class="badge meal-{{ e.meal }}">{{ e.meal }}</span>
+              {% else %}
+              <span style="color:#ccc;">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge source-{{ e.source | replace(' ', '-') }}">{{ e.source }}</span>
+            </td>
+            <td class="amount-cell">
+              {% if e.source == "From Groceries" %}
+              <span class="free-label">—</span>
+              {% else %}
+              ${{ "%.2f"|format(e.amount) }}
+              {% endif %}
+            </td>
+            <td style="font-size:0.85rem; color:#666;">{{ e.reference if e.reference else '—' }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">No entries yet. Head back home to add some!</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <script>
+    function filterTable() {
+      const search = document.getElementById('search').value.toLowerCase();
+      const meal   = document.getElementById('meal-filter').value;
+      const source = document.getElementById('source-filter').value;
+      document.querySelectorAll('#history-table tbody tr').forEach(row => {
+        const ok = (!search || row.dataset.item.includes(search))
+                && (!meal   || row.dataset.meal === meal)
+                && (!source || row.dataset.source === source);
+        row.style.display = ok ? '' : 'none';
+      });
+    }
+  </script>
+
+</body>
+</html>

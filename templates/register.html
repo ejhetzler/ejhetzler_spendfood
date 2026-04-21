@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — Food Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body {
+      background: linear-gradient(145deg, #1e5026 0%, #2d7a3a 60%, #3a9e4a 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .auth-logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 28px;
+      text-decoration: none;
+    }
+    .auth-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .auth-card h1 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #1a3a1e;
+      margin-bottom: 6px;
+    }
+    .auth-card .sub {
+      font-size: 0.88rem;
+      color: #7a9a7a;
+      margin-bottom: 28px;
+    }
+    .auth-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .auth-field label {
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .auth-field input {
+      padding: 12px 14px;
+      font-size: 0.97rem;
+      border: 1.5px solid #d0ddd1;
+      border-radius: 10px;
+      background: #f9fdf9;
+      color: #2c3e2d;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    .auth-field input:focus {
+      outline: none;
+      border-color: #3a7d44;
+      box-shadow: 0 0 0 3px rgba(58,125,68,0.12);
+    }
+    .auth-field .hint {
+      font-size: 0.75rem;
+      color: #aaa;
+      margin-top: 2px;
+    }
+    .auth-btn {
+      width: 100%;
+      background: #3a7d44;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 13px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .auth-btn:hover  { background: #2e6336; transform: translateY(-1px); }
+    .auth-btn:active { transform: translateY(0); }
+    .auth-error {
+      background: #fde8e8;
+      color: #c0392b;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+      margin-bottom: 18px;
+      border-left: 3px solid #e74c3c;
+    }
+    .auth-footer {
+      text-align: center;
+      margin-top: 22px;
+      font-size: 0.88rem;
+      color: #7a9a7a;
+    }
+    .auth-footer a {
+      color: #3a7d44;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .auth-footer a:hover { text-decoration: underline; }
+    .back-link {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      text-decoration: none;
+      margin-top: 20px;
+    }
+    .back-link:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <a href="/landing" class="auth-logo">🥗 Food Tracker</a>
+
+  <div class="auth-card">
+    <h1>Create your account</h1>
+    <p class="sub">Start tracking your food spending in seconds.</p>
+
+    {% if error %}
+    <div class="auth-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <div class="auth-field">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" placeholder="pick a username"
+               minlength="3" required autofocus>
+        <span class="hint">At least 3 characters</span>
+      </div>
+      <div class="auth-field">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" placeholder="••••••••"
+               minlength="6" required>
+        <span class="hint">At least 6 characters</span>
+      </div>
+      <button type="submit" class="auth-btn">Create Account</button>
+    </form>
+
+    <div class="auth-footer">
+      Already have an account? <a href="/login">Log in</a>
+    </div>
+  </div>
+
+  <a href="/landing" class="back-link">← Back to home</a>
+
+</body>
+</html>
